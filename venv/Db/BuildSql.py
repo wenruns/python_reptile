@@ -27,11 +27,17 @@ class BuildSql:
             self._fields = ''
             self._values = ''
             for i in data:
-                self._fields += i + ','
-                if isinstance(data[i], str):
-                    self._values += '"%s",'
-                else:
-                    self._values += '%s,'
+                if self._operate == 'insert':
+                    self._fields += i + ','
+                    if isinstance(data[i], str):
+                        self._values += '"%s",'
+                    else:
+                        self._values += '%s,'
+                elif self._operate == 'update':
+                    if isinstance(data[i], str):
+                        self._values += i + '="%s",'
+                    else:
+                        self._values += i + '=%s,'
             self._fields = self._fields.strip(',')
             self._values = self._values.strip(',')
         return self;
@@ -141,17 +147,26 @@ class BuildSql:
 
     def __condition(self, column, operate, value, relation, sqlStr):
         if not sqlStr or sqlStr is None:
-            sqlStr += 'where '
-        if (sqlStr != 'where '):
+            sqlStr += ' where '
+        if (sqlStr != ' where '):
             sqlStr += ' ' + relation + ' '
         if hasattr(column, '__call__'):
             builder = BuildSql()
             column(builder)
             sqlStr += '(' + builder.makeSubSql() + ')'
             if value:
-                sqlStr += operate + str(value)
+                if isinstance(value, str):
+                    sqlStr += ' ' + operate + ' "' + value + '"'
+                else:
+                    sqlStr += ' ' + operate + ' ' + str(value)
         else:
-            sqlStr += column + operate + str(value)
+            if isinstance(value, str):
+                if operate == 'like':
+                    sqlStr += column + ' ' + operate + ' "' + value + '"'
+                else:
+                    sqlStr += column + ' ' + operate + ' "' + value + '"'
+            else:
+                sqlStr += column + ' ' + operate + ' ' + str(value)
         return sqlStr
 
     def _makeConditionStr(self):
@@ -253,14 +268,11 @@ class BuildSql:
                     + self._makeOrderByStr()\
                     + self._makeLimitStr()
 
-
     def _updateSql(self):
-        print('update')
-
-
+        self._sql = 'update ' + self._tableName + ' set ' + self._values + self._makeConditionStr()
 
     def _insertSql(self):
         self._sql = 'insert into ' + self._tableName + ' (' + self._fields + ') values (' + self._values + ')'
 
     def _deleteSql(self):
-        self._sql = 'delete from ' + self._tableName + ' ' + self._makeConditionStr()
+        self._sql = 'delete from ' + self._tableName + self._makeConditionStr()

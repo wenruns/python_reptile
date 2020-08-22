@@ -1,6 +1,8 @@
 import MySQLdb
+import MySQLdb.cursors
 import traceback
 from Db.BuildSql import BuildSql
+
 
 class DB:
     '数据库操作'
@@ -21,6 +23,7 @@ class DB:
         self.db = None
         self.cursor = None
         self.sqlBuilder = None
+        self.doEscapeString = True
 
 
     # 链接数据库
@@ -33,6 +36,7 @@ class DB:
                 db = self.dbname,
                 charset = self.charset,
                 port = self.port,
+                cursorclass = MySQLdb.cursors.DictCursor,
             )
 
         return self.db
@@ -45,17 +49,19 @@ class DB:
 
     # 执行sql
     def excute(self, sql = ''):
-        print(self.sql)
-        if not sql is None:
+        if not sql or sql is None:
             if self.sql is None:
                 print('over')
                 return 0
             sql = self.sql
-        print(sql)
-        cursor = self._getCursor()
-        print('asdf',cursor)
-        cursor.execute(sql)
-        return cursor
+        res = self._getCursor().execute(sql)
+        self._connect().commit()
+        # res = self._getCursor().fetchall()
+        if sql.find('select') == 0:
+            res = self._getCursor().fetchall()
+        elif sql.find('insert') == 0:
+            res = self._getCursor().lastrowid
+        return res
 
     def _getBuilder(self):
         if not self.sqlBuilder or self.sqlBuilder is None:
@@ -119,7 +125,6 @@ class DB:
 
     # 插入单条数据
     def _insertOne(self, data):
-        data = self.dictSort(data);
         if not self.sql or self.sql is None:
             self.sql = self._getBuilder().formatData(data).operater('insert').buildSql()
         sql = self.sql % tuple(data.values())
@@ -132,12 +137,12 @@ class DB:
             if isinstance(data, dict):
                 res = self._insertOne(data)
             elif isinstance(data, list):
+                res = []
                 while len(data):
                     item = data.pop()
-                    res = self._insertOne(item)
-                    print('res=', res)
+                    res.append(self._insertOne(self.dictSort(item)))
             else:
-                raise Exception('插入数据库类型不正确（dict或list)', 'DB->insert')
+                raise Exception('插入数据类型不正确（dict或list)', 'DB->insert')
             self._connect().commit()
         except BaseException as err:
             self._connect().rollback()
@@ -157,6 +162,7 @@ class DB:
 
     def get(self):
         self.sql = self._getBuilder().operater('select').buildSql()
+        print(self.sql)
         self._getCursor().execute(self.sql)
         data = self._getCursor().fetchall()
         self._initData()
@@ -171,4 +177,42 @@ class DB:
             self._connect().rollback()
             traceback.print_exc()
         self._initData()
+        return res
+
+    def _updateOne(self, item, where=[], orWhere=[]):
+        print(item, where,orWhere)
+        values = []
+        for field in where:
+            values.append(item.pop(field))
+            if(not self.sql or self.sql is None):
+                self.where(field, '=', '%s')
+        for field in orWhere:
+            values.append(item.pop(field))
+            if(not self.sql or self.sql is None):
+                self.orWhere(field, '=', '%s')
+        print(tuple(item.values()), values)
+        if not self.sql or self.sql is None:
+            self.sql = self._getBuilder().operater('update').formatData(item).buildSql()
+            print(self.sql)
+        sql = self.sql % (*tuple(item.values()), *tuple(values))
+        print(sql)
+        print((*tuple(item.values()), *tuple(values)))
+        return self._getCursor().execute(sql)
+
+    def update(self, data, where = [], orWhere=[]):
+        try:
+            if isinstance(data, dict):
+                res = self._updateOne(data, where, orWhere)
+            elif isinstance(data, list):
+                res = 0
+                while len(data):
+                    item = data.pop()
+                    res += self._updateOne(self.dictSort(item), where, orWhere)
+            else:
+                raise Exception('更新数据类型不正确（dict或list)', 'DB->update')
+            self._connect().commit()
+        except:
+            self._connect().rollback()
+            traceback.print_exc()
+            return False
         return res

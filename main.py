@@ -78,9 +78,17 @@ db = DB(host = '127.0.0.1', username='root', password='root', dbname='test')
 
 # def callback(query:BuildSql):
 #     query.where('t.id','<', 40).where('u.id','>', 20)
-
-# res = db.table('test').get()
-
-res = db.table('test').where('id', '=', 6).delete()
+# res = db.table('test').where('a', 'like', '%a%').orderBy('id', 'desc').select('id,a,type').first()
+# res = db.excute("update test set a='每一次，都在，徘徊孤单中坚强' where id > 30")
+# res = db.table('test').where('id', '<', 20).delete()
+res = db.table('test').where('a', 'like', "`%h%`").update([
+    {
+        'a':'aaaa',
+        'id': 27
+    },{
+        'a':'aaa',
+        'id': 22
+    }
+], ['id'])
 print(res)
 
