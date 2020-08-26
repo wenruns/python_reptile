@@ -69,26 +69,118 @@
 #
 # print("exiting main thread")
 
-from Include.test.funModel import *
+# from Include.test.funModel import *
 
-from Db.Db import DB
-from Db.BuildSql import BuildSql
+# from Db import DB
+# from Db.BuildSql import BuildSql
+#
+# db = DB(host = '127.0.0.1', username='root', password='root', dbname='test')
+#
+# res = db.table('test').get()
+# print(res)
+#
+#
+# from Client import Client
+#
+# client = Client()
+#
+# res = client.agent().request(url='https://dg.fang.anjuke.com/')
+# #
+# print(res)
 
-db = DB(host = '127.0.0.1', username='root', password='root', dbname='test')
+# import Building,time
+#
+# Building.Server().run()
 
-# def callback(query:BuildSql):
-#     query.where('t.id','<', 40).where('u.id','>', 20)
-# res = db.table('test').where('a', 'like', '%a%').orderBy('id', 'desc').select('id,a,type').first()
-# res = db.excute("update test set a='每一次，都在，徘徊孤单中坚强' where id > 30")
-# res = db.table('test').where('id', '<', 20).delete()
-res = db.table('test').where('a', 'like', "`%h%`").update([
-    {
-        'a':'aaaa',
-        'id': 27
-    },{
-        'a':'aaa',
-        'id': 22
-    }
-], ['id'])
+
+# import os
+# file = open('./test.txt', 'w')
+# print(file)
+# file.write('sss')
+# file.close()
+
+
+# import random,string
+
+# print(''.join(random.sample(string.ascii_letters + string.digits, 32)))
+
+# file = open('./htmlContent'+str(time.time())+'.txt', 'w')
+# file.write('hello word')
+# file.close()
+
+# def consumer():
+#     status = True
+#     while True:
+#         print('consumer', status)
+#         n = yield status
+#         print('n=', n)
+#         print("我拿到了{}!".format(n))
+#         if n == 3:
+#             status = False
+#
+# def producer(consumer):
+#     n = 5
+#     while n > 0:
+#         print('p-n=', n)
+#         # yield给主程序返回消费者的状态
+#         yield consumer.send(n)
+#         print('p-n=aaa')
+#         n -= 1
+#
+# if __name__ == '__main__':
+#     c = consumer()
+#     c.send(None)
+#     p = producer(c)
+#
+#     for status in p:
+#         print('status='+str(status))
+#         if status == False:
+#             print("我只要3,4,5就行啦")
+#             break
+#     print("程序结束")
+
+
+import Building
+
+file = open('./html/anjuke-1_.html', 'r', encoding='UTF-8')
+content = file.read()
+# print(content)
+
+content = content.replace('\n', '').replace('\r', '').replace('\t', '').replace(' ', '').replace('&nbsp;', '')
+# fo = open('./html/data.html', 'w', encoding='utf-8')
+# fo.write(content)
+# fo.close()
+
+# <div class="key-list imglazyload">
+# <div class="list-page">
+# pattern = re.compile(r'<div class="key-list imglazyload">', re.M|re.S|re.X|re.U)
+file.close()
+
+obj = Building.AnJuKe.Anjuke(None, {});
+data = obj.filterData(content)
+print(data)
+res = obj.saveData(data, content)
 print(res)
+
+
+# import AliOss,Db
+#
+# aliOss = AliOss.AliOss('LTAI4GCNbM8N7ygEvSazmRt3', '9ItUuJA1J4cfG2mZ1Ugkhy1m4lLZP9', 'http://oss-cn-hongkong.aliyuncs.com','shudeng')
+#
+# data = aliOss.getFileList('', '')
+#
+# db = Db.DB(host='localhost', username='root', password='root', dbname='oss_files')
+# res = db.table('new_oss_files').insert(data)
+# print(res)
+
+# import re
+#
+# string = 'xls/人教版八年级上册英语单词表.xls'
+# print(re.match('.*/$', string))
+# lastPosition = string.rfind('/')
+# print(lastPosition, string[lastPosition+1:string.rfind('.')])
+
+
+
+
 

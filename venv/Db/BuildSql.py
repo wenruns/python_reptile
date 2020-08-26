@@ -21,6 +21,8 @@ class BuildSql:
         self._tableName = ''
         self._alias = ''
         self._joins = []
+        self._conditionValues = {}
+        self.counter = 0
 
     def formatData(self, data):
         if not self._fields or self._fields is None:
@@ -154,20 +156,23 @@ class BuildSql:
             builder = BuildSql()
             column(builder)
             sqlStr += '(' + builder.makeSubSql() + ')'
-            if value:
+            if value is not None:
                 if isinstance(value, str):
-                    sqlStr += ' ' + operate + ' "' + value + '"'
+                    sqlStr += ' ' + operate + ' "%s"'
                 else:
-                    sqlStr += ' ' + operate + ' ' + str(value)
+                    sqlStr += ' ' + operate + ' %s'
+                self._conditionValues['condition_closure'+self.counter] = value
+                self.counter += 1
         else:
             if isinstance(value, str):
-                if operate == 'like':
-                    sqlStr += column + ' ' + operate + ' "' + value + '"'
-                else:
-                    sqlStr += column + ' ' + operate + ' "' + value + '"'
+                sqlStr += column + ' ' + operate + ' "%s"'
             else:
-                sqlStr += column + ' ' + operate + ' ' + str(value)
+                sqlStr += column + ' ' + operate + ' %s'
+            self._conditionValues['condition_'+column] = value
         return sqlStr
+
+    def getConditionValues(self):
+        return self._conditionValues
 
     def _makeConditionStr(self):
         sqlStr = ''
